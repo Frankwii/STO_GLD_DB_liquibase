@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - includeAll:
+      path: create_tables
+  - includeAll:
+      path: fill_tables
