@@ -1,0 +1,186 @@
+\documentclass{article}
+
+\usepackage[catalan]{babel}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\title{Estàndard de la base de dades de \\l'Observatori de Turisme Sostenible}
+\author{Frank William Hammond Espinosa}
+\date{Darrera actualització: \today}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Estàndard BDD OTS}
+\rhead{Darrera actualització: \today}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definició}
+
+\crefname{definition}{la definició}{les definicions}
+
+\crefname{section}{la secció}{les seccions}
+\crefname{subsection}{la secció}{les seccions}
+\crefname{subsubsection}{la secció}{les seccions}
+
+\newcommand{\crefpairconjunction}{ i }
+\newcommand{\crefmiddleconjunction}{, }
+\newcommand{\creflastconjunction}{ i }
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+A aquest document es detallarà la metodologia a seguir a l'hora de crear i omplir taules a la base de dades d'aquest repositori.
+
+Per qualsevol dubte relacionat amb aquest document, enviau un mail a frank.hammond@fueib.org o avazquez1@conselldemallorca.net.
+
+\section{Com llegir aquest document}\label{section:howtoread}
+This is work in progress.
+
+\section{Nomenclatura de taules i columnes}\label{section:nomenclature}
+\subsection{Taules}\label{section:nomenclature:tables}
+\subsubsection{Semàntica}\label{section:nomenclature:tables:semantics}
+La majoria de taules presents a la BDD a dia d'avui estan pensades per ser utilitzades a quadres de comandament (\emph{dashboards}) fets amb PowerBI. Per aquest motiu es segueix una nomenclatura inspirada en la manera habitual de separar la informació en el món de l'analítica de negoci.
+
+Les taules es separen en dos tipus: de \textbf{dimensió} (\emph{dimension}) i de \textbf{fets} (\emph{facts}).
+
+\begin{definition}[Taules de dimensió]\label{def:tables:dimension}
+  Les \textbf{taules de dimensió} són les que contenen els detalls dels conceptes individuals que conté la base de dades. Sempre tenen un identificador únic per fila (\emph{primary key} o clau primària) i tota la informació emmagatzemada dels elements que representen.
+\end{definition}
+
+A aquestes taules normalment s'inclouen els noms i/o descripcions dels objectes modelitzats a la base de dades, sovint en diferents idiomes (una columna per idioma). També s'anoten les relacions a altres objectes de la base de dades en forma de \emph{foreign keys} o claus forànies. Per exemple, per representar la relació ``cada ciutat pertany a un país'', a la taula de ciutat es guarda una columna amb una clau forània a l'identificador de la taula de país.
+
+Per conveni, a aquesta base de dades les claus primàries sempre estaran formades per una única columna de tipus \verb|INT| (enter). 
+
+\begin{definition}[Taules de fets]\label{def:tables:facts}
+  Les \textbf{taules de fets} són les que contenen les relacions ``reals'' que s'han enregistrat a la base de dades. Normalment, aquestes dades que són les que s'empren a nivell últim per construir gràfiques, i no es solen creuar (operacions \verb|JOIN|) entre elles.
+\end{definition}
+
+Sempre que sigui possible, les columnes d'aquestes taules han de contenir identificadors numèrics de tots els elements que contenguin, és a dir, claus forànies a alguna taula de dimensió. En cap cas podran contenir descripcions textuals (\emph{strings}) que apareguin a més d'una fila. Veure \cref{section:normalization} per més detalls sobre guardar identificadors numèrics o descripcions textuals i \cref{section:nomenclature:tables:examples} per exemples de taules.
+
+\subsubsection{Notació}\label{section:nomenclature:tables:notation}
+Primerament, els noms de les taules han d'anar prefixats pels literals \verb|DIM_| o \verb|FAC_| segons siguin de dimensió o de fets (veure \cref{def:tables:dimension,def:tables:facts} per a una explicació detallada dels conceptes). En cas que en un futur fos necessari ampliar la classificació de taules (per exemple, afegir taules de metadades), s'afegiria un prefixe de tres lletres seguit per un guió baix, semblant als definits prèviament.
+
+Després del prefixe, s'inclou el nom de l'objecte o relació que modelitza la taula. Això, evidentment, depèn molt del cas concret, però s'han de seguir una sèrie de directrius generals que s'inclouen a continuació. Aquestes directrius també apliquen pels noms de les columnes, com es detallarà a \ref{section:nomenclature:columns:notation}. Tot i així, ha de prevalèixer el sentit comú del programador, ja que és una qüestió a decidir cas per cas.
+
+\begin{definition}[Notació general per noms]\label{def:general:notation}
+Les directrius a seguir a l'hora de posar noms a objectes dins la base de dades seran les següents:
+\begin{enumerate}
+  \item Es segueix la convenció informàtica ``\emph{screaming snake case}''. Això vol dir que els noms han d'estar enterament en majúscules, composts únicament per caràcters alfanumèrics ASCII (nombres i lletres de l'alfabet anglès, sense accents) i barres baixes (\_), i les paraules han d'estar separades per barres baixes en comptes d'espais. En cap cas s'admeten signes de puntuació llevat de la barra baixa. Això inclou espais en blanc, guions (-), barres verticals o inclinades (\verb'|', \verb|\|, \verb|/|), cometes (\verb|'|, \verb|"|), signes de puntuació estàndard (\verb|,|, \verb|.|, \verb|;|, \verb|:|), etcètera.
+
+  \item Els noms han d'estar en anglès sempre que sigui possible. Noms o sigles d'organitzacions internacionals sempre han d'incloure's en anglès també (per exemple, \emph{UN} en comptes d'\emph{ONU}).
+
+  Excepcions notables a aquesta regla són els topònims o noms de demarcacions territorials nacionals o comunitàries, o organismes propis. Aquests es mantindran en la llengua o sigles locals, en castellà si són entitats nacionals i en català si són balears. Per exemple, una hipotètica taula que guardi informació respecte els diferents consells insulars de les balears s'hauria d'anomenar \verb|DIM_CONSELL_INSULAR|; per les diferents comunitats autònomes d'Espanya, una taula \verb|DIM_COMUNIDAD_AUTONOMA| o \verb|DIM_INE_REGION| per una taula de regions de països segons l'Institut Nacional d'Estadísitca (noti's que no es tradueixen les sigles).
+
+  En cas que sigui necessari guardar un nom d'aquest caire que contengui accents o enyes (``Ñ''), s'intentarà ``ASCIIficar'' aquest el màxim possible, conservant raonablement la fonètica; és a dir, lletres accentuades o amb dièresi es guardaran com la mateixa lletra sense accent o dièresi, i els caràcters ``Ñ'' es substituiran per ``NY''.
+
+  \item És preferible utilitzar noms sencers a diminitius o sigles - encara que això resulti en noms verbosos - sempre que els diminutius no siguin part del llenguatge quotidià. Per exemple, no s'ha de posar \verb|CA| en comptes de \verb|COMUNIDAD_AUTONOMA|, perquè no és immediat inferir a què es refereixen aquelles sigles. En canvi, sí és recomanable emprar \verb|UN|, \verb|INE| o \verb|FRONTUR| com a part d'un nom perquè són abreujacions ben establertes i que es podrien emprar com a part d'una frase oral en l'idioma corresponent sence necessitat d'aclarir què signifiquen.
+\end{enumerate}
+\end{definition}
+
+Addicionalment, s'hauran de seguir indicacions que són específiques per a taules.
+
+\begin{definition}[Notació específica per noms de taules]\label{def:tables:notation}
+Si la taula modelitza algun concepte en mode que cada fila correspongui a un únic objecte d'aquell tipus, el nom ha d'anar en singular (e.g. \verb|DIM_CITY| en comptes de \verb|DIM_CITIES| per a una taula que guardi informació referent a ciutats).
+\end{definition}
+
+\subsubsection{Casos d'estudi}\label{section:nomenclature:tables:examples}
+This is work in progress.
+
+\subsection{Columnes}\label{section:nomenclature:columns}
+\subsubsection{Semàntica}\label{section:nomenclature:columns:semantics}
+Normalment, tota columna a la base de dades pertany a una, i només una\footnote{Una excepció notable a això és la taula de calendari i totes les claus forànies a ella. Això es discuteix detalladament a \cref{section:special:calendar}.}, de les següents categories:
+
+\begin{definition}[Classificació de columnes]\label{def:columns:classification}
+  Els tipus de columnes a identificar són els següents:
+  \begin{enumerate}
+    \item \textbf{D'identificador intern}. S'hi guarda la \emph{primary key} (clau primària) de la taula en qüestió. Sempre que sigui possible, s'ha de fer servir una única columna com a clau primària, i aquesta ha de tenir el tipus \verb|INT|.
+
+    \item \textbf{D'identificador extern}. S'hi guarden \emph{foreign keys} (claus forànies) a altres taules.
+
+    \item \textbf{De codi}. Aquestes columnes només estan presents a les taules de dimensió. Contenen codis únics però que no actuen com a clau primària. Per exemple, cada país té associat un codi únic per l'INE i tres codis, cadascun d'ells únics, per la ONU; a més a més, tenen un identificador únic, exclusiu d'aquesta base de dades. Idealment, estan anotades amb la restricció \verb|UNIQUE|.
+
+    \item \textbf{De data}. Contenen dates que corresponen a un dia o els límits del període de temps associat a la data que es registra. En cas que el registre vengui associat a un dia, es farà servir una única columna que contindrà el dia; i, en cas que vengui associat a un període de temps superior a un dia (mes, trimestre, any...), es faran servir dues columnes de data: una guardarà la data d'inici, i l'altra el dia immediatament posterior a la data de finalització. Per exemple, una fila corresponent a dades agregades a tot el mes de gener de 2024 tindrà enregistrades les dates d'1 de gener de 2024 i 1 de febrer de 2024. El tipus de dada a guardar a aquestes columnes serà \verb|DATE|.
+
+    \item \textbf{De marca temporal}. Contenen marques temporals (data i hora). Si el registre ve associat a una marca temporal concreta, es guardarà només una columna; i si ve associat a un interval de temps se'n guardaran dues: una per l'inici i l'altra pel final. El tipus de dada a guardar a aquestes columnes serà \verb|DATETIME2|.
+
+    \item \textbf{Numèriques}. Contenen valors numèrics que no siguin codis ni identificadors (per exemple, el valor d'una mesura o una quantitat de persones). Sovint, són mesures o quantitats que tenen associada una unitat. Sempre que sigui possible i això no introdueixi problemes computacionals o de precisió, s'empraran unitats ``sense prefixe'' (e.g. metres en comptes de kilòmetres) o, per contejos, el nombre sense agregar (per exemple, en comptes de tenir una columna de milers o milions de turistes, s'hauria de tenir una de nombre de turistes, i enregistrar $1000000$ de turistes en comptes de $1000$ milers o $1$ milió de turistes). El tipus de dada a guardar serà \verb|INT| o \verb|FLOAT|\footnote{
+    És possible triar de manera explícita la precisió que es desitja a la representació de punt flotant que guardi la base de dades. Per defecte, SQLServer empra 8 bytes (\href{https://learn.microsoft.com/en-us/sql/t-sql/data-types/float-and-real-transact-sql?view=sql-server-ver16}{https://learn.microsoft.com/en-us/sql/t-sql/data-types/float-and-real-transact-sql?view=sql-server-ver16}), que és el màxim que es pot guardar a un FLOAT. Si és necessari tenir més precisió, s'ha d'emprar el tipus DECIMAL(p,r) amb valors de $p$ i $r$ adequats (cf. \href{https://learn.microsoft.com/en-us/sql/t-sql/data-types/decimal-and-numeric-transact-sql?view=sql-server-ver16}{https://learn.microsoft.com/en-us/sql/t-sql/data-types/decimal-and-numeric-transact-sql?view=sql-server-ver16}).
+    }, segons si els nombres involucrats són enters o no.
+
+    \item \textbf{Booleanes}. Contenen informació que només pot prendre dos valors. Es guardaran únicament dos nombres a aquesta columna: 1 i 0. El nom de la columna ha de ser prou descriptiu com per poder saber quin dels dos possibles valors correspon a 1 (vertader) i quin a 0 (fals). El tipus de dada a guardar a aquestes columnes serà \verb|BIT|, i obligatòriament es posarà la restricció \verb|NOT NULL|.
+
+    \item \textbf{De nom}. Aquestes columnes només estan presents a les taules de dimensió. Corresponen al nom que se li dona a l'objecte a un idioma en concret. En particular, a una taula donada hi haurà una columna de nom per a cadascun dels idiomes en què es registri la informació d'aquella taula. El tipus de dada a guardar a aquestes columnes sempre ha de ser \verb|NVARCHAR|, idealment amb una longitud màxima sensible (s'ha d'evitar, en la mesura del possible, emprar \verb|NVARCHAR(MAX)|\footnote{És millor emprar NVARCHARs limitats perquè ocupen menys espai en memòria, però si es limita la longitud i s'intenta introduir text més llarg que aquella longitud, simplement es truncarà el text. Tingueu-ho en compte a l'hora de posar la fita superior.}).
+
+    \item \textbf{De descripció}. Aquestes columnes només estan presents a les taules de dimensió. Contenen descripcions més detallades dels objectes, a un idioma concret. A una taula donada, només pot haver una columna de descripció si ja hi ha una columna de nom a aquella taula i es necessita guardar una explicació més llarga, o si no té sentit posar-li un nom però sí una descripció a aquell objecte. El tipus de dada a guardar a aquestes columnes serà \verb|NVARCHAR(MAX)|.
+  \end{enumerate}
+\end{definition}
+
+\subsubsection{Notació}\label{section:nomenclature:columns:notation}
+
+Normalment, els noms de les columnes segueixen el següent format:
+\begin{center}
+\begin{tabular}{c}
+\begin{lstlisting}
+  [PREFIXE_]NOM[_SUFIX]
+\end{lstlisting}
+\end{tabular}
+\end{center}
+On ``\verb|NOM|'' correspon al nom de la columna i és obligatori, i ``\verb|PREFIXE|'' i ``\verb|SUFIX|'' són opcionals i la seva utilització ve detallada a \cref{def:columns:notation}. Les barres baixes entre nom i afixes només s'han de posar si aquests estan presents, i els claudàtors no s'han d'incloure: només estan presents aquí per a indicar que els afixes són opcionals.
+
+Per triar un nom de columna, s'han de seguir les directrius generals de \cref{def:general:notation}, a més d'una sèrie de consideracions específiques per columnes, que depenen directament del seu tipus (aquest, al seu torn, ha de ser determinat segons \cref{def:columns:classification}). A continuació es recullen les regles a seguir per a cada tipus:
+
+\begin{definition}[Notació de columnes]\label{def:columns:notation}
+La notació a seguir pels noms de les columnes depèn del seu tipus segons \cref{def:columns:classification}. A saber, per a cada tipus de columna, són:
+\begin{enumerate}
+  \item \textbf{D'identificador intern}. Sempre que no sigui ambigu, el nom d'aquestes columnes serà senzillament ``\verb|ID|'', i no tindran prefix ni sufix.
+
+  \item \textbf{D'identificador extern}. El nom d'aquestes columnes serà \verb|ID_|, seguit pel nom de la taula l'ID de la qual es referencia, sense prefixes de taula. Per exemple, per a una referència a \verb|DIM_COUNTRY.ID|, la columna de clau forània s'hauria de dir \verb|ID_COUNTRY|.
+
+  \item \textbf{De codi}. El nom d'aquestes columnes anirà prefixat per \verb|CO_|, seguit d'un nom prou descriptriu del que es codifica.
+
+  \item \textbf{De data}. El nom d'aquestes columnes dependrà del tipus de data que emmagatzemin i el context de la taula: si és una data única i no hi ha confusió possible respecte què representa aquella data al context de lataula, simplement serà ``\verb|DATE|''. En cas que hi hagi confusió (per exemple, si hi ha més d'una data o rang de dates a una mateixa taula; o si el nom de la taula no permet inferir clarament què significa la data), s'emprarà el prefixe ``\verb|DA_|'', seguit per un nom prou descriptiu. En cas que es guardin rangs de dates, s'empraran els sufixes ``\verb|_START|'' i ``\verb|_END|'' pels extrems inferior i superior, respectivament.
+
+  \item \textbf{De marca temporal}. La notació a seguir per a aquest tipus de columna serà igual que per les de data, llevat de les següents substitucions: en comptes de ``\verb|DATE|'' s'emprarà ``\verb|TIMESTAMP|'' sota el mateix pretext d'unicitat i no ambiguïtat; i, en comptes de ``\verb|DA_|'' com a prefixe, s'emprarà ``\verb|TS_|''.
+
+  \item \textbf{Numèriques}. Quan aquestes columnes guardin qualque mesura física amb unitats associades, s'ha d'explicitar, com a sufixe, quina unitat de mesura té, en sense abreujar i en ortografia nordamericana. Per exemple, s'ha d'emprar ``\verb|_METERS|'' o ``\verb|_LITERS|'', i no ``\verb|_METRES|'' ni ``\verb|\_L|''. Al cas de guardar valors monetaris, sí s'emprarà l'abreujació usual de tres lletres, segons l'estàndard ISO 4217. En són exemples ``\verb|_EUR|'', ``\verb|_USD|'', ``\verb|_JPY|''...
+
+  \item \textbf{Booleanes}. El nom d'aquestes columnes anirà prefixat sempre per ``\verb|SW_|''. A més, el nom en sí ha d'estar sempre en afirmatiu; és a dir, els valors ``TRUE'' a aquella columna han de corresponde a entrades que satisfacin la condició. Per a aconseguir això, sol esser bastant útil emprar la paraula ``is''. Per exemple, per a una hipotètica columna que especifiqui si aquella dada s'ha extret d'una font oficial o no, en comptes d'emprar com a nom ``\verb|SW_OFFICIAL|'' (no queda clar què vol dir ``TRUE'' i què vol dir ``FALSE''), s'ha d'emprar ``\verb|SW_IS_OFFICIAL|'', en mode que els valors ``TRUE'' corresponguin a registres que, efectivament, són oficials.
+
+  \item \textbf{De nom}. El nom d'aquestes columnes anirà prefixat sempre per ``\verb|TX_|'' (de ``TeXt''), i sufixat sempre per un codi de dues lletres corresponent a l'idioma en què està escrit el nom: ``\verb|ES|'', ``\verb|CA|'' i ``\verb|EN|'' pel castellà, català i anglès, respectivament. Si l'objecte que modelitzen ve explicitat pel nom de la taula (hauria de ser així a la majoria de casos), s'ha d'evitar la repetició i simplement posar ``\verb|TX_ES|'' (o semblant, segons l'idioma). Per exemple, a la taula ``\verb|DIM_COMUNIDAD_AUTONOMA|'', basta posar ``\verb|TX_ES|'' per guardar el nom de les comunitats pertinents, i no s'ha d'emprar ``\verb|TX_COMUNIDAD_AUTONOMA_ES|''.
+
+  \item \textbf{De descripció}. La notació a seguir per a aquestes taules serà igual que per les de nom, llevat de la substitució del prefixe ``\verb|TX_|'' per ``\verb|DS_|'' (de ``DeScription'').
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Casos d'estudi}\label{section:nomenclature:columns:examples}
+This is work in progress.
+
+\section{Normalització}\label{section:normalization}
+This is work in progress.
+\subsection{Relacions estàndard}\label{section:normalization:standard}
+This is work in progress.
+
+
+\subsection{Relacions jeràrquiques}\label{section:normalization:hierarchical}
+This is work in progress.
+
+\section{Taules especials}
+Algunes taules a la base de dades no segueixen totes les regles detallades a aquest document per motius específics.
+
+A continuació s'inclou una llista completa de tals taules, així com una descripció detallada de quines convencions violen i una explicació dels motius pel qual ho fan.
+
+En cas d'introduir una taula així a la base de dades, serà necessari afegir una subsecció a aquesta secció del document.
+
+\subsection{Calendari}\label{section:special:calendar}
+
+\end{document}
