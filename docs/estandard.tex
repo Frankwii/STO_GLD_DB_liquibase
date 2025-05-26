@@ -103,11 +103,11 @@ Normalment, tota columna a la base de dades pertany a una, i només una\footnote
 \begin{definition}[Classificació de columnes]\label{def:columns:classification}
   Els tipus de columnes a identificar són els següents:
   \begin{enumerate}
-    \item \textbf{D'identificador intern}. S'hi guarda la \emph{primary key} (clau primària) de la taula en qüestió. Sempre que sigui possible, s'ha de fer servir una única columna com a clau primària, i aquesta ha de tenir el tipus \verb|INT|.
+    \item \textbf{D'identificador intern}. S'hi guarda la \emph{primary key} (clau primària) de la taula en qüestió. Obligatòriament a les taules de dimensió s'ha de fer servir una única columna com a clau primària, i aquesta ha de tenir el tipus \verb|INT|.
 
-    \item \textbf{D'identificador extern}. S'hi guarden \emph{foreign keys} (claus forànies) a altres taules.
+    \item \textbf{D'identificador extern}. S'hi guarden \emph{foreign keys} (claus forànies) a altres taules. Idealment, només hi haurà claus forànies a taules de dimensió.
 
-    \item \textbf{De codi}. Aquestes columnes només estan presents a les taules de dimensió. Contenen codis únics però que no actuen com a clau primària. Per exemple, cada país té associat un codi únic per l'INE i tres codis, cadascun d'ells únics, per la ONU; a més a més, tenen un identificador únic, exclusiu d'aquesta base de dades. Idealment, estan anotades amb la restricció \verb|UNIQUE|.
+    \item \textbf{De codi}. Contenen codis únics però que no actuen com a clau primària. Per exemple, cada país té associat un codi únic per l'INE i tres codis, cadascun d'ells únics, per la ONU; a més a més, tenen un identificador únic, exclusiu d'aquesta base de dades. Idealment, estan anotades amb la restricció \verb|UNIQUE|.
 
     \item \textbf{De data}. Contenen dates que corresponen a un dia o els límits del període de temps associat a la data que es registra. En cas que el registre vengui associat a un dia, es farà servir una única columna que contindrà el dia; i, en cas que vengui associat a un període de temps superior a un dia (mes, trimestre, any...), es faran servir dues columnes de data: una guardarà la data d'inici, i l'altra el dia immediatament posterior a la data de finalització. Per exemple, una fila corresponent a dades agregades a tot el mes de gener de 2024 tindrà enregistrades les dates d'1 de gener de 2024 i 1 de febrer de 2024. El tipus de dada a guardar a aquestes columnes serà \verb|DATE|.
 
