@@ -44,7 +44,12 @@ A aquest document es detallarà la metodologia a seguir a l'hora de crear i ompl
 Per qualsevol dubte relacionat amb aquest document, enviau un mail a frank.hammond@fueib.org o avazquez1@conselldemallorca.net.
 
 \section{Com llegir aquest document}\label{section:howtoread}
-This is work in progress.
+
+Abans de guardar qualsevol taula a la base de dades de producció, és important tenir clars diversos conceptes relatius a aquest escrit.
+
+Primordialment, és necessari llegir detingudament \cref{section:nomenclature} ja que és específica d'aquesta base de dades, i tenir clars els estàndards de normalització d'un model de dades ``floc de neu''.
+
+En segon lloc, si les dades a introduir contenen molts valors ``faltants'' o ambigus, s'han de seguir les directrius detallades a \cref{section:unclear_values}.
 
 \section{Nomenclatura de taules i columnes}\label{section:nomenclature}
 \subsection{Taules}\label{section:nomenclature:tables}
@@ -119,7 +124,7 @@ Normalment, tota columna a la base de dades pertany a una, i només una\footnote
 
     \item \textbf{Booleanes}. Contenen informació que només pot prendre dos valors. Es guardaran únicament dos nombres a aquesta columna: 1 i 0. El nom de la columna ha de ser prou descriptiu com per poder saber quin dels dos possibles valors correspon a 1 (vertader) i quin a 0 (fals). El tipus de dada a guardar a aquestes columnes serà \verb|BIT|, i obligatòriament es posarà la restricció \verb|NOT NULL|.
 
-    \item \textbf{De nom}. Aquestes columnes només estan presents a les taules de dimensió. Corresponen al nom que se li dona a l'objecte a un idioma en concret. En particular, a una taula donada hi haurà una columna de nom per a cadascun dels idiomes en què es registri la informació d'aquella taula. El tipus de dada a guardar a aquestes columnes sempre ha de ser \verb|NVARCHAR|, idealment amb una longitud màxima sensible (s'ha d'evitar, en la mesura del possible, emprar \verb|NVARCHAR(MAX)|\footnote{És millor emprar NVARCHARs limitats perquè ocupen menys espai en memòria, però si es limita la longitud i s'intenta introduir text més llarg que aquella longitud, simplement es truncarà el text. Tingueu-ho en compte a l'hora de posar la fita superior.}).
+    \item \textbf{De nom}. Aquestes columnes només estan presents a les taules de dimensió. Corresponen al nom que se li dona a l'objecte en un idioma en concret. En particular, a una taula donada hi haurà una columna de nom per a cadascun dels idiomes en què es registri la informació d'aquella taula. El tipus de dada a guardar a aquestes columnes sempre ha de ser \verb|NVARCHAR|, idealment amb una longitud màxima sensible (s'ha d'evitar, en la mesura del possible, emprar \verb|NVARCHAR(MAX)|\footnote{És millor emprar NVARCHARs limitats perquè ocupen menys espai en memòria, però si es limita la longitud i s'intenta introduir text més llarg que aquella longitud, simplement es truncarà el text. Tingueu-ho en compte a l'hora de posar la fita superior.}).
 
     \item \textbf{De descripció}. Aquestes columnes només estan presents a les taules de dimensió. Contenen descripcions més detallades dels objectes, a un idioma concret. A una taula donada, només pot haver una columna de descripció si ja hi ha una columna de nom a aquella taula i es necessita guardar una explicació més llarga, o si no té sentit posar-li un nom però sí una descripció a aquell objecte. El tipus de dada a guardar a aquestes columnes serà \verb|NVARCHAR(MAX)|.
   \end{enumerate}
@@ -152,27 +157,27 @@ La notació a seguir pels noms de les columnes depèn del seu tipus segons \cref
 
   \item \textbf{De marca temporal}. La notació a seguir per a aquest tipus de columna serà igual que per les de data, llevat de les següents substitucions: en comptes de ``\verb|DATE|'' s'emprarà ``\verb|TIMESTAMP|'' sota el mateix pretext d'unicitat i no ambiguïtat; i, en comptes de ``\verb|DA_|'' com a prefixe, s'emprarà ``\verb|TS_|''.
 
-  \item \textbf{Numèriques}. Quan aquestes columnes guardin qualque mesura física amb unitats associades, s'ha d'explicitar, com a sufixe, quina unitat de mesura té, en sense abreujar i en ortografia nordamericana. Per exemple, s'ha d'emprar ``\verb|_METERS|'' o ``\verb|_LITERS|'', i no ``\verb|_METRES|'' ni ``\verb|\_L|''. Al cas de guardar valors monetaris, sí s'emprarà l'abreujació usual de tres lletres, segons l'estàndard ISO 4217. En són exemples ``\verb|_EUR|'', ``\verb|_USD|'', ``\verb|_JPY|''...
+  \item \textbf{Numèriques}. Quan aquestes columnes guardin qualque mesura física amb unitats associades, s'ha d'explicitar, com a sufixe, quina unitat de mesura té, en sense abreujar i en ortografia nordamericana. Per exemple, s'ha d'emprar ``\verb|_METERS|'' o ``\verb|_LITERS|'', i no ``\verb|_METRES|'' ni ``\verb|_L|''. Al cas de guardar valors monetaris, sí s'emprarà l'abreujació usual de tres lletres, segons l'estàndard ISO 4217. En són exemples ``\verb|_EUR|'', ``\verb|_USD|'', ``\verb|_JPY|''...
 
   \item \textbf{Booleanes}. El nom d'aquestes columnes anirà prefixat sempre per ``\verb|SW_|''. A més, el nom en sí ha d'estar sempre en afirmatiu; és a dir, els valors ``TRUE'' a aquella columna han de corresponde a entrades que satisfacin la condició. Per a aconseguir això, sol esser bastant útil emprar la paraula ``is''. Per exemple, per a una hipotètica columna que especifiqui si aquella dada s'ha extret d'una font oficial o no, en comptes d'emprar com a nom ``\verb|SW_OFFICIAL|'' (no queda clar què vol dir ``TRUE'' i què vol dir ``FALSE''), s'ha d'emprar ``\verb|SW_IS_OFFICIAL|'', en mode que els valors ``TRUE'' corresponguin a registres que, efectivament, són oficials.
 
   \item \textbf{De nom}. El nom d'aquestes columnes anirà prefixat sempre per ``\verb|TX_|'' (de ``TeXt''), i sufixat sempre per un codi de dues lletres corresponent a l'idioma en què està escrit el nom: ``\verb|ES|'', ``\verb|CA|'' i ``\verb|EN|'' pel castellà, català i anglès, respectivament. Si l'objecte que modelitzen ve explicitat pel nom de la taula (hauria de ser així a la majoria de casos), s'ha d'evitar la repetició i simplement posar ``\verb|TX_ES|'' (o semblant, segons l'idioma). Per exemple, a la taula ``\verb|DIM_COMUNIDAD_AUTONOMA|'', basta posar ``\verb|TX_ES|'' per guardar el nom de les comunitats pertinents, i no s'ha d'emprar ``\verb|TX_COMUNIDAD_AUTONOMA_ES|''.
 
-  \item \textbf{De descripció}. La notació a seguir per a aquestes taules serà igual que per les de nom, llevat de la substitució del prefixe ``\verb|TX_|'' per ``\verb|DS_|'' (de ``DeScription'').
+  \item \textbf{De descripció}. La notació a seguir per a aquestes taules serà igual que per les de nom, llevat que en comptes del prefixe ``\verb|TX_|'', s'haurà d'emprar ``\verb|DS_|'' (de ``DeScription'').
 \end{enumerate}
 \end{definition}
 
 \subsubsection{Casos d'estudi}\label{section:nomenclature:columns:examples}
 This is work in progress.
 
-\section{Normalització}\label{section:normalization}
-This is work in progress.
-\subsection{Relacions estàndard}\label{section:normalization:standard}
-This is work in progress.
+\section{Model de dades i normalització}\label{section:normalization}
+A decidir.
 
-
-\subsection{Relacions jeràrquiques}\label{section:normalization:hierarchical}
-This is work in progress.
+% \subsection{Relacions estàndard}\label{section:normalization:standard}
+% A decidir.
+%
+% \subsection{Relacions jeràrquiques}\label{section:normalization:hierarchical}
+% A decidir.
 
 \section{Taules especials}
 Algunes taules a la base de dades no segueixen totes les regles detallades a aquest document per motius específics.
@@ -182,5 +187,33 @@ A continuació s'inclou una llista completa de tals taules, així com una descri
 En cas d'introduir una taula així a la base de dades, serà necessari afegir una subsecció a aquesta secció del document.
 
 \subsection{Calendari}\label{section:special:calendar}
+
+\section{Emmagatzematge de valors faltants, imprecisos o provisionals.}\label{section:unclear_values}
+
+\subsection{Valors faltants}\label{section:unclear_values:missing}
+\begin{definition}
+  Una situació comuna a l'hora de tractar amb dades és trobar valors ``faltants''. Normalment, aquests es representen a programes informàtics com a \verb|NULL| (SQL), \verb|None| (Python), \verb|NA| (R), \verb|N/A| (Excel), \verb|NaN| (pandas, numpy, Matlab) o semblants, o 0 a alguns casos, si les dades són numèriques. A aquest text, anomenarem \textbf{vàcua} a qualsevol dada d'aquest caire.
+
+  Direm que una dada vàcua és \textbf{numèrica} si les dades no vàcues de la seva agrupació (columnes a SQL o pandas, variables a R...) són numèriques (cf. \cref{def:columns:classification}); altrament, direm que és \textbf{no numèrica}.
+\end{definition}
+
+Si bé la manera ideal de tractar dades vàcues depèn molt de la semàntica específica de cada conjunt de dades, proposam una sèrie d'heurístiques generals a seguir dins aquesta base de dades. Com sempre, ha de prevalèixer el criteri del programador.
+
+\begin{definition}
+  Per representar conjunts de dades amb entrades vàcues a aquesta base de dades, s'han de seguir, en ordre, les següents indiciacions:
+  \begin{enumerate}
+    \item Si la presència d'una dada vàcua no numèrica té un signficat clar dins el context del conjunt de dades en què se troba, s'haurà de guardar un registre a la taula corresponent en base de dades que contengui \verb|NULL| a la columna pertinent. Per exemple, si es guarden dades sobre el guanyador de una competició anual i es sap amb certesa que un any no va haver guanyador per causes sobrevingudes, a la columna corresponent al guanyador haurà d'haver un valor \verb|NULL|.
+    \item Si la dada vàcua és numèrica, la seva presència té un significat clar dins el context del conjunt de dades en què se troba, i aquest ha de ser emprat amb finalitats estadístiques, queda a criteri del programador si substituir-la per algun estadístic de la resta de dades (mitjana, mediana, mínim, màxim...) o per \(0\).
+    \item En qualsevol cas, si existeix dubte raonable respecte el significat de la dada vàcua i la necessitat de guardar-la, \textbf{no s'haurà de guardar} cap registre per a aquella dada. És a dir, es prefereixen representacions denses de les dades a representacions \textit{sparse} no justificables.
+  \end{enumerate}
+\end{definition}
+
+\subsection{Valors provisionals.}
+
+A decidir.
+
+\subsection{Valors imprecisos.}
+
+A decidir.
 
 \end{document}
